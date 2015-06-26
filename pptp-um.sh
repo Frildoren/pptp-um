@@ -11,7 +11,7 @@ show_help() {
 }
 
 get_users() {
-	sudo cat /etc/ppp/chap-secrets | grep "^[^#;]" 
+	sudo cat /etc/ppp/chap-secrets | grep "^[^#;]"
 }
 
 get_user() {
@@ -41,13 +41,13 @@ fi
 
 if [[ $1 == "-i" || $1 == "--install" ]]
 then
-	if [[ $(ls /usr/bin | grep -c atq) -gt 0 ]]
-	then
-		echo "Utility already installed!"
-		show_help 1
-	else
+	ls /usr/bin/at 2> /dev/null
+
+	if [[ $? != 0 ]]
 		sudo apt-get install at
 	fi
+	
+	sudo cp -f $0 /usr/bin/pptp-um.sh
 fi
 
 if [[ $1 == "-r" || $1 == "--remove" ]]
@@ -58,7 +58,7 @@ if [[ $1 == "-r" || $1 == "--remove" ]]
 		then
 			show_help 1
 		fi
-		
+
 		if [[ $(get_user $name) ]]
 		then
 			job=$(get_user_job $name)
@@ -80,7 +80,7 @@ if [[ $1 == "-r" || $1 == "--remove" ]]
 					sudo kill $pid
 				fi
 			done <<< "$out"
-			
+
 		else
 			echo "username $name does not exist."
 			exit 1
@@ -100,7 +100,7 @@ if [[ $1 == "-r" || $1 == "--remove" ]]
 		then
 			$0 -r $name
 		fi
-		
+
 		if [[ ${#timeout} -gt 1 ]]
 		then
 			if [[ ! $4 ]]
@@ -112,5 +112,5 @@ if [[ $1 == "-r" || $1 == "--remove" ]]
 		fi
 
 		sudo sh -c "echo \"$name\t*\t$pass\t*\t#--$job--#\" >>  /etc/ppp/chap-secrets"
-		
+
 fi
