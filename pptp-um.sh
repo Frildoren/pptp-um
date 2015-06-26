@@ -115,8 +115,9 @@ if [[ $1 == "-r" || $1 == "--remove" ]]
 			fi
 
 			job=$(echo $0 -r $name | at -M now +$timeout 2>&1 >/dev/null | tail -n 1 | sed 's/job \(.*\) at.*/\1/')
+			job="#--"$job"--#"
 		fi
 
-		sudo sh -c "echo \"$name\t*\t$pass\t*\t#--$job--#\" >>  /etc/ppp/chap-secrets"
+		sudo sh -c "echo \"$name\t*\t$pass\t*\t$job\" >>  /etc/ppp/chap-secrets"
 
 fi
