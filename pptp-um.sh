@@ -49,6 +49,7 @@ then
 	ls /usr/bin/at 2> /dev/null
 
 	if [[ $? != 0 ]]
+	then
 		sudo apt-get install at
 	fi
 	
