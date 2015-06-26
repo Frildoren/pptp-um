@@ -59,9 +59,10 @@ if [[ $1 == "-r" || $1 == "--remove" ]]
 			show_help 1
 		fi
 		
-		if [[ get_user $name ]]
+		if [[ $(get_user $name) ]]
 		then
 			job=$(get_user_job $name)
+
 			if [[ $job ]]
 			then
 				at -r $job
@@ -73,8 +74,11 @@ if [[ $1 == "-r" || $1 == "--remove" ]]
 			while read -r line;
 			do
 				rip=$(echo $line | awk '{print $3}')
-				pid=$(ps aux | grep $rip | grep root | awk '{print $2;exit;}')
-				sudo kill $pid
+				if [[ $rip ]]
+				then
+					pid=$(ps aux | grep $rip | grep root | awk '{print $2;exit;}')
+					sudo kill $pid
+				fi
 			done <<< "$out"
 			
 		else
@@ -92,7 +96,7 @@ if [[ $1 == "-r" || $1 == "--remove" ]]
 			show_help 1
 		fi
 
-		if [[ get_user $name ]]
+		if [[ $(get_user $name) ]]
 		then
 			$0 -r $name
 		fi
