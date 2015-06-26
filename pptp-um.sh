@@ -1,6 +1,8 @@
 #!/bin/bash
 
 show_help() {
+	echo "Usage: $0 -i --> Installs the necessary utilities to use the script"
+
 	echo "Usage: $0 username password [timeout]"
 	echo "Usage: $0 -r username"
 	exit $1
@@ -20,6 +22,17 @@ if [[ $1 == "-l" || $1 == "--list" ]]
 then
 	get_users
 	exit 0
+fi
+
+if [[ $1 == "-i" || $1 == "--install" ]]
+then
+	if [[ $(ls /usr/bin | grep -c atq) -gt 0 ]]
+	then
+		echo "Utility already installed!"
+		show_help 1
+	else
+		sudo apt-get install at
+	fi
 fi
 
 if [[ $1 == "-r" || $1 == "--remove" ]]
