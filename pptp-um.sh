@@ -51,7 +51,7 @@ if [[ $1 == "-r" || $1 == "--remove" ]]
 			show_help 1
 		fi
 
-		if [[ $(sudo cat /etc/ppp/chap-secrets | grep $name) -gt 0 ]]
+		if [[ $(sudo cat /etc/ppp/chap-secrets | grep -c $name) -gt 0 ]]
 		then
 			echo -e "User $name already exists.\n"
 			show_help 1
