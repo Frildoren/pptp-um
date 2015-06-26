@@ -35,7 +35,12 @@ fi
 
 if [[ $1 == "-l" || $1 == "--list" ]]
 then
-	get_user_names
+	get_user_names |
+		while IFS= read -r line
+		do
+			job=$(get_user_job $line)
+			echo -e "$line\t\t" $(atq | grep "^$job")
+		done
 	exit 0
 fi
 
@@ -108,7 +113,7 @@ if [[ $1 == "-r" || $1 == "--remove" ]]
 				timeout=$timeout"minutes"
 			fi
 
-			job=$(echo $0 -r $name | at now +$timeout 2>&1 >/dev/null | tail -n 1 | sed 's/job \(.*\) at.*/\1/')
+			job=$(echo $0 -r $name | at -M now +$timeout 2>&1 >/dev/null | tail -n 1 | sed 's/job \(.*\) at.*/\1/')
 		fi
 
 		sudo sh -c "echo \"$name\t*\t$pass\t*\t#--$job--#\" >>  /etc/ppp/chap-secrets"
