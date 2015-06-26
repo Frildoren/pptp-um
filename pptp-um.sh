@@ -2,7 +2,7 @@
 
 show_help() {
 	echo "Usage: $0 username password [timeout]"
-	echo "Usage $0 -r username"
+	echo "Usage: $0 -r username"
 	exit $1
 }
 
@@ -51,15 +51,21 @@ if [[ $1 == "-r" || $1 == "--remove" ]]
 			show_help 1
 		fi
 
-		if [[ ${#timeout} -gt 1 ]]
+		if [[ $(sudo cat /etc/ppp/chap-secrets | grep $name) -gt 0 ]]
 		then
-			if [[ ! $4 ]]
+			echo -e "User $name already exists.\n"
+			show_help 1
+		else
+			if [[ ${#timeout} -gt 1 ]]
 			then
-				timeout=$timeout"minutes"
+				if [[ ! $4 ]]
+				then
+					timeout=$timeout"minutes"
+				fi
+
+				job=$(echo $0 -r $name | at now +$timeout 2>&1 >/dev/null | tail -n 1 | sed 's/job \(.*\) at.*/\1/')
 			fi
 
-			job=$(echo $0 -r $name | at now +$timeout 2>&1 >/dev/null | tail -n 1 | sed 's/job \(.*\) at.*/\1/')
+			sudo sh -c "echo \"$name\t*\t$pass\t* # $job\" >>  /etc/ppp/chap-secrets"
 		fi
-
-		sudo sh -c "echo \"$name\t*\t$pass\t* # $job\" >>  /etc/ppp/chap-secrets"
 fi
