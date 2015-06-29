@@ -43,7 +43,7 @@ then
 			then
 				jobstr="until "$(atq | grep "^$job	" | awk '{print $5" - "$4" "$3" "$6}')
 			else 
-				jobstr="never expires"
+				jobstr=""
 			fi
 			
 			echo -e "$line\t\t$jobstr"
@@ -53,14 +53,15 @@ fi
 
 if [[ $1 == "-i" || $1 == "--install" ]]
 then
-	ls /usr/bin/at 2> /dev/null
+	ls /usr/bin/at 2>&1 > /dev/null
 
 	if [[ $? != 0 ]]
 	then
 		sudo apt-get install at
 	fi
 	
-	sudo cp -f $0 /usr/bin/pptp-um.sh
+	sudo cp -f $0 /usr/bin/pptp-um
+	exit $?
 fi
 
 if [[ $1 == "-r" || $1 == "--remove" ]]
