@@ -19,7 +19,7 @@ get_user() {
 }
 
 get_user_job(){
-	get_user $1 | sed 's/.*#--\(.*\)--#.*/\1/'
+	get_user $1 | sed -e 's/.*\#--\([0-9]*\)--\#.*/\1/'
 }
 
 get_user_names() {
@@ -39,7 +39,14 @@ then
 		while IFS= read -r line
 		do
 			job=$(get_user_job $line)
-			echo -e "$line\t\t" $(atq | grep "^$job")
+			if [[ $job =~ ^-?[0-9]+$ ]]
+			then
+				jobstr="until "$(atq | grep "^$job	" | awk '{print $5" - "$4" "$3" "$6}')
+			else 
+				jobstr="never expires"
+			fi
+			
+			echo -e "$line\t\t$jobstr"
 		done
 	exit 0
 fi
@@ -115,7 +122,10 @@ if [[ $1 == "-r" || $1 == "--remove" ]]
 			fi
 
 			job=$(echo $0 -r $name | at -M now +$timeout 2>&1 >/dev/null | tail -n 1 | sed 's/job \(.*\) at.*/\1/')
-			job="#--"$job"--#"
+			if [[ $job ]]
+			then
+				job="#--"$job"--#"
+			fi
 		fi
 
 		sudo sh -c "echo \"$name\t*\t$pass\t*\t$job\" >>  /etc/ppp/chap-secrets"
