@@ -26,6 +26,14 @@ get_user_names() {
 	get_users | awk '{print $1}'
 }
 
+remove_user() {
+	job=$(get_user_job $1)
+	if [[ $job ]]
+	then
+		at -r $job
+	fi
+	sudo sed -i "/$1/d" /etc/ppp/chap-secrets
+}
 
 
 if [[ $1 == "-h" || $1 == "--help" ]]
@@ -65,70 +73,68 @@ then
 fi
 
 if [[ $1 == "-r" || $1 == "--remove" ]]
+then
+	name=$2;
+
+	if [[ ! $name ]]
 	then
-		name=$2;
+		show_help 1
+	fi
 
-		if [[ ! $name ]]
-		then
-			show_help 1
-		fi
+	if [[ $(get_user $name) ]]
+	then
+		remove_user $name
 
-		if [[ $(get_user $name) ]]
-		then
-			job=$(get_user_job $name)
-
-			if [[ $job ]]
+		out=$(last -w | grep "still logged in" | grep $name)
+		while read -r line;
+		do
+			rip=$(echo $line | awk '{print $3}')
+			if [[ $rip ]]
 			then
-				at -r $job
+				pid=$(ps aux | grep $rip | grep root | awk '{print $2;exit;}')
+				sudo kill $pid
 			fi
-
-			sudo sed -i "/$name/d" /etc/ppp/chap-secrets
-
-			out=$(last -w | grep "still logged in" | grep $name)
-			while read -r line;
-			do
-				rip=$(echo $line | awk '{print $3}')
-				if [[ $rip ]]
-				then
-					pid=$(ps aux | grep $rip | grep root | awk '{print $2;exit;}')
-					sudo kill $pid
-				fi
-			done <<< "$out"
-
-		else
-			echo "username $name does not exist."
-			exit 1
-		fi
+		done <<< "$out"
 
 	else
-		name=$1
-		pass=$2
-		timeout=$3" "$4
+		echo "username $name does not exist."
+		exit 1
+	fi
 
-		if [[ ! $name || ! $pass ]]
-		then
-			show_help 1
-		fi
+else
+	name=$1
+	pass=$2
+	timeout=$3" "$4
 
-		if [[ $(get_user $name) ]]
+	if [[ ! $name || ! $pass ]]
+	then
+		show_help 1
+	fi
+
+	if [[ $(get_user $name) ]]
+	then
+		if [[ $pass != $(get_user $name | awk '{print $3}') ]]
 		then
 			$0 -r $name
+		else
+			remove_user $name
 		fi
+	fi
 
-		if [[ ${#timeout} -gt 1 ]]
+	if [[ ${#timeout} -gt 1 ]]
+	then
+		if [[ ! $4 ]]
 		then
-			if [[ ! $4 ]]
-			then
-				timeout=$timeout"minutes"
-			fi
-
-			job=$(echo $0 -r $name | at -M now +$timeout 2>&1 >/dev/null | tail -n 1 | sed 's/job \(.*\) at.*/\1/')
-			if [[ $job ]]
-			then
-				job="#--"$job"--#"
-			fi
+			timeout=$timeout"minutes"
 		fi
 
-		sudo sh -c "echo \"$name\t*\t$pass\t*\t$job\" >>  /etc/ppp/chap-secrets"
+		job=$(echo $0 -r $name | at -M now +$timeout 2>&1 >/dev/null | tail -n 1 | sed 's/job \(.*\) at.*/\1/')
+		if [[ $job ]]
+		then
+			job="#--"$job"--#"
+		fi
+	fi
+
+	sudo sh -c "echo \"$name\t*\t$pass\t*\t$job\" >>  /etc/ppp/chap-secrets"
 
 fi
